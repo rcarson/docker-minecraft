@@ -18,8 +18,6 @@ ENV MINECRAFT_URL=https://s3.amazonaws.com/Minecraft.Download/versions/${MINECRA
 RUN curl -fsSL ${MINECRAFT_URL} -o /usr/share/minecraft/minecraft.jar \
  && echo "${MINECRAFT_SHA}  /usr/share/minecraft/minecraft.jar" | sha1sum -c -
  
-RUN echo "eula=TRUE" > /var/lib/minecraft/eula.txt
-
 COPY ./minecraft-entrypoint.sh /usr/local/bin/minecraft-entrypoint.sh
 
 VOLUME /var/lib/minecraft
