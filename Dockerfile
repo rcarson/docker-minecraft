@@ -10,8 +10,8 @@ ENV JAVA_OPTS "-Xmx2048m"
 RUN mkdir -p /var/lib/minecraft \
  && mkdir -p /usr/share/minecraft
 
-ENV MINECRAFT_VERSION 1.9.4
-ENV MINECRAFT_SHA edbb7b1758af33d365bf835eb9d13de005b1e274
+ENV MINECRAFT_VERSION 1.10.2
+ENV MINECRAFT_SHA 3d501b23df53c548254f5e3f66492d178a48db63
 
 ENV MINECRAFT_URL=https://s3.amazonaws.com/Minecraft.Download/versions/${MINECRAFT_VERSION}/minecraft_server.${MINECRAFT_VERSION}.jar
 
