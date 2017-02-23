@@ -1,4 +1,4 @@
-FROM   openjdk:8-jdk-alpine
+FROM openjdk:8-jdk-alpine
 MAINTAINER Robert Carson <robert.carson@gmail.com>
 
 RUN apk --update add curl ca-certificates bash \
