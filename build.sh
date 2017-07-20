@@ -19,28 +19,41 @@ TYPE='release'
 while [[ $# -gt 0 ]]; do
     case $1 in
 	-h|--help) usage; exit 1;;
-        -t|--type) TYPE=${2}; shift;;
+        --snapshot) TYPE='snapshot';;
+	--version) version="$2"; shift;;
     esac
     shift
 done
 
-# get latest release version
-version=$(curl -fsSL https://launchermeta.mojang.com/mc/game/version_manifest.json \
-	| python -c "import sys, json; print(json.load(sys.stdin)[\"latest\"][\"$TYPE\"])")
+if [[ -z "${version:-}" ]]; then
+    # get latest release version
+    version=$(curl -fsSL https://launchermeta.mojang.com/mc/game/version_manifest.json \
+        | python -c "import sys, json; print(json.load(sys.stdin)[\"latest\"][\"$TYPE\"])")
+fi
 
-echo "Build Version: $version ($TYPE)"
+echo "-+ Build Version: $version ($TYPE)"
 
-manifest="$(curl -fsSL "https://s3.amazonaws.com/Minecraft.Download/versions/${version}/${version}.json")"
+# pull any docker images that might exist for this version
+docker pull rcarson/minecraft:${version} || true
+
+manifest="$(curl -fsSL "https://s3.amazonaws.com/Minecraft.Download/versions/${version}/${version}.json")" || { echo "error: Bad version (${version})"; exit 1; }
+
 
 sha1=$(echo $manifest | python -c 'import sys, json; print(json.load(sys.stdin)["downloads"]["server"]["sha1"])')
 
-docker build -t rcarson/minecraft:${version} \
-	     --build-arg MINECRAFT_VERSION=${version} \
-	     --build-arg MINECRAFT_SHA=${sha1} .
+image_id=$(docker build -q -t rcarson/minecraft:${version} \
+	          --build-arg MINECRAFT_VERSION=${version} \
+	          --build-arg MINECRAFT_SHA=${sha1} .) || {
+    echo "-+ Image rcarson/minecraft:${version} not created"
+    exit 1
+    }
+
+echo "-+ Image rcarson/minecraft:${version} created ($image_id)"
+
 docker push rcarson/minecraft:${version}
 
 if [[ ${TYPE} == 'release' ]]; then
-    docker tag rcarson/minecraft:${version} rcarson/minecraft:latest
+    docker tag ${image_id} rcarson/minecraft:latest
     docker push rcarson/minecraft:latest
 fi
 
