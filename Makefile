@@ -12,3 +12,6 @@ clean-data:
 
 clean-images:
 	docker rmi `docker images --filter dangling=true -q`
+
+clean-volumes:
+	docker volume rm `docker volume ls --filter dangline=true -q`

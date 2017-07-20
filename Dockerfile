@@ -1,4 +1,4 @@
-FROM   openjdk:8-jdk-alpine
+FROM openjdk:8-jdk-alpine
 MAINTAINER Robert Carson <robert.carson@gmail.com>
 
 RUN apk --update add curl ca-certificates bash \
@@ -10,8 +10,8 @@ ENV JAVA_OPTS "-Xmx2048m"
 RUN mkdir -p /var/lib/minecraft \
  && mkdir -p /usr/share/minecraft
 
-ENV MINECRAFT_VERSION 1.11
-ENV MINECRAFT_SHA 48820c84cb1ed502cb5b2fe23b8153d5e4fa61c0
+ARG MINECRAFT_VERSION=1.12
+ARG MINECRAFT_SHA=8494e844e911ea0d63878f64da9dcc21f53a3463
 
 ENV MINECRAFT_URL=https://s3.amazonaws.com/Minecraft.Download/versions/${MINECRAFT_VERSION}/minecraft_server.${MINECRAFT_VERSION}.jar
 
