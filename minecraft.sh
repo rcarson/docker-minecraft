@@ -10,6 +10,7 @@ declare -a JAVA_OPTS_ARRAY
 echo "eula=TRUE" > /var/lib/minecraft/eula.txt
 
 # copy any reference files to /var/lib/minecraft
+# shellcheck disable=SC2016
 find /usr/share/minecraft/ref/ \
     -type f \
     -exec /bin/bash -c 'source /usr/local/bin/minecraft-support; for arg; do copy_reference_file "$arg"; done' _ {} +

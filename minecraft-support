@@ -28,11 +28,11 @@ export RESOURCE_PACK_SHA1=${RESOURCE_PACK_SHA1:-}
 export ONLINE_MODE=${ONLINE_MODE:-true}
 export RESOURCE_PACK=${RESOURCE_PACK:-}
 export PVP=${PVP:-true}
-export DIFFICULTY=${DIFFICULTY:-1}
+export DIFFICULTY=${DIFFICULTY:-3}
 export ENABLE_COMMAND_BLOCK=${ENABLE_COMMAND_BLOCK:-false}
 export GAMEMODE=${GAMEMODE:-0}
 export PLAYER_IDLE_TIMEOUT=${PLAYER_IDLE_TIMEOUT:-0}
-export MAX_PLAYERS=${MAX_PLAYERS:-20}
+export MAX_PLAYERS=${MAX_PLAYERS:-10}
 export MAX_TICK_TIME=${MAX_TICK_TIME:-60000}
 export SPAWN_MONSTERS=${SPAWN_MONSTERS:-true}
 export VIEW_DISTANCE=${VIEW_DISTANCE:-10}
@@ -48,7 +48,7 @@ function render_template_file {
         return $?
     fi
     
-    envsubst < ${template} > ${file}
+    envsubst < "${template}" > "${file}"
     copy_reference_file "${file}"
 }
     
@@ -59,7 +59,7 @@ function copy_reference_file {
     local extension="${file##*.}"
 
     if [[ ${extension} == 'tmpl' ]]; then
-        render_template_file ${file}
+        render_template_file "${file}"
     else
         relative_path="${file//${basedir}}"
         relative_dirs="$(dirname "${relative_path}")"
@@ -67,6 +67,11 @@ function copy_reference_file {
         if [[ ${relative_dirs} != '.' ]]; then
             target="${target}/${relative_dirs}"
             mkdir -p "${target}"
+        fi
+
+        if [[ -e "${target}/$(basename "${file}")" ]]; then
+            echo "Target already exists."
+            return 0
         fi
 
         echo "installing ${file} -> ${target}"
