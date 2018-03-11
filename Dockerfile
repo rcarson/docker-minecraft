@@ -10,8 +10,8 @@ ENV JAVA_OPTS "-Xmx2048m"
 RUN mkdir -p /var/lib/minecraft \
  && mkdir -p /usr/share/minecraft/ref
 
-ARG MINECRAFT_VERSION=1.12
-ARG MINECRAFT_SHA=8494e844e911ea0d63878f64da9dcc21f53a3463
+ARG MINECRAFT_VERSION=1.12.2
+ARG MINECRAFT_SHA=886945bfb2b978778c3a0288fd7fab09d315b25f
 
 ENV MINECRAFT_URL=https://s3.amazonaws.com/Minecraft.Download/versions/${MINECRAFT_VERSION}/minecraft_server.${MINECRAFT_VERSION}.jar
 
@@ -28,6 +28,7 @@ VOLUME /var/lib/minecraft
 WORKDIR /var/lib/minecraft
 
 EXPOSE 25565
+EXPOSE 25575
 
 ENTRYPOINT ["minecraft.sh"]
 
