@@ -4,7 +4,7 @@
 # Robert Carson <robert.carson@gmail.com>
 
 BASEDIR='/srv/minecraft'
-VERSION='1.12'
+VERSION='1.12.2'
 PORT='25565'
 RCON_PORT='25575'
 INTERACTIVE='false'
