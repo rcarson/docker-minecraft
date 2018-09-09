@@ -21,7 +21,8 @@ while IFS= read -d '' -r opt; do
 done < <([[ $JAVA_OPTS ]] && xargs printf '%s\0' <<<"$JAVA_OPTS")
 
 if [[ "$#" -eq 0 || "${1#-}" != "$1" ]]; then
-    set -- java "${JAVA_OPTS_ARRAY[@]}" "${@}" -jar /usr/share/minecraft/minecraft.jar nogui
+    set -- java "${JAVA_OPTS_ARRAY[@]}" "${@}" \
+                -jar /usr/share/minecraft/minecraft.jar nogui
 fi
 
 exec "$@"
