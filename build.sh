@@ -2,7 +2,7 @@
 #
 #
 
-set -e
+set -eu
 
 function usage {
     echo "Usage: $(basename $0) [OPTION]..."
@@ -15,49 +15,72 @@ function usage {
 
 }
 
+declare CURL_OPTS \
+        TYPE \
+        VERSION \
+        VERSIONS_MANIFEST_URL \
+        VERSIONS_MANIFEST_JSON \
+        VERSION_MANIFEST_URL \
+        MINECRAFT_VERSION \
+        MINECRAFT_SHA1 \
+        MINECRAFT_URL \
+        DOCKER_BUILD_OPTS \
+        IMAGE_ID
+
+CURL_OPTS=( '-f' '-s' '-S' '-L' )
 TYPE='release'
 
 while [[ $# -gt 0 ]]; do
     case $1 in
 	    -h|--help) usage; exit 1;;
         --snapshot) TYPE='snapshot';;
-	    --version) version="$2"; shift;;
+	    --version) MINECRAFT_VERSION="$2"; shift;;
     esac
     shift
 done
 
-if [[ -z "${version:-}" ]]; then
+VERSIONS_MANIFEST_URL='https://launchermeta.mojang.com/mc/game/version_manifest.json'
+VERSIONS_MANIFEST_JSON="$(curl "${CURL_OPTS[@]}" "${VERSIONS_MANIFEST_URL}")"
+
+if [[ ! -n "${MINECRAFT_VERSION:+_}" ]]; then
     # get latest release version
-    #version=$(curl -fsSL https://launchermeta.mojang.com/mc/game/version_manifest.json \
-    #    | python -c "import sys, json; print(json.load(sys.stdin)[\"latest\"][\"$TYPE\"])")
-    version="$(curl -fsSL https://launchermeta.mojang.com/mc/game/version_manifest.json | jq -r .latest.${TYPE})"
+    MINECRAFT_VERSION="$(echo "${VERSIONS_MANIFEST_JSON}" | jq -r ".latest.${TYPE}")"
 fi
 
-echo "-+ Build Version: $version ($TYPE)"
+echo "-+ Build Version: $MINECRAFT_VERSION ($TYPE)"
 
 # pull any docker images that might exist for this version
-docker pull rcarson/minecraft:${version} || true
+docker pull rcarson/minecraft:${MINECRAFT_VERSION} || true
 
-manifest="$(curl -fsSL "https://s3.amazonaws.com/Minecraft.Download/versions/${version}/${version}.json")" || { 
-    echo "error: Bad version (${version})"; exit 1;
+MANIFEST_URL="https://s3.amazonaws.com/Minecraft.Download/versions/${MINECRAFT_VERSION}/${MINECRAFT_VERSION}.json"
+
+VERSION_MANIFEST_URL="$(echo "${VERSIONS_MANIFEST_JSON}" | jq -r --arg latest_version "${MINECRAFT_VERSION}" '.versions[] | select(.id == $latest_version) | .url')"
+VERSION_MANIFEST_JSON="$(curl "${CURL_OPTS[@]}" "${VERSION_MANIFEST_URL}")"
+
+MINECRAFT_SHA="$(echo "${VERSION_MANIFEST_JSON}" | jq -r '.downloads.server.sha1')"
+MINECRAFT_URL="$(echo "${VERSION_MANIFEST_JSON}" | jq -r '.downloads.server.url')"
+
+set -x
+
+DOCKER_BUILD_OPTS=(
+              '-q'
+	          '--build-arg' "MINECRAFT_VERSION=${MINECRAFT_VERSION}"
+	          '--build-arg' "MINECRAFT_SHA=${MINECRAFT_SHA}"
+	          '--build-arg' "MINECRAFT_URL=${MINECRAFT_URL}"
+              '-t' "rcarson/minecraft:${MINECRAFT_VERSION}"
+              )
+
+IMAGE_ID="$(docker build "${DOCKER_BUILD_OPTS[@]}" -f Dockerfile .)" || {
+    echo "-+ Image rcarson/minecraft:${MINECRAFT_VERSION} not created"
+    exit 1
 }
 
-#sha1=$(echo $manifest | python -c 'import sys, json; print(json.load(sys.stdin)["downloads"]["server"]["sha1"])')
-sha1="$(echo $manifest | jq -r .downloads.server.sha1)"
+echo "-+ Image rcarson/minecraft:${MINECRAFT_VERSION} created ($IMAGE_ID)"
 
-image_id=$(docker build -q -t rcarson/minecraft:${version} \
-	          --build-arg MINECRAFT_VERSION=${version} \
-	          --build-arg MINECRAFT_SHA=${sha1} .) || {
-    echo "-+ Image rcarson/minecraft:${version} not created"
-    exit 1
-    }
-
-echo "-+ Image rcarson/minecraft:${version} created ($image_id)"
-
-docker push rcarson/minecraft:${version}
+docker push rcarson/minecraft:${MINECRAFT_VERSION}
 
 if [[ ${TYPE} == 'release' ]]; then
-    docker tag ${image_id} rcarson/minecraft:latest
+    docker tag ${IMAGE_ID} rcarson/minecraft:latest
     docker push rcarson/minecraft:latest
 fi
 
