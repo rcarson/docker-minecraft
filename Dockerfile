@@ -23,11 +23,6 @@ ENTRYPOINT ["minecraft.sh"]
 
 ENV JAVA_OPTS "-Xmx2048m"
 
-#ARG MINECRAFT_URL=https://s3.amazonaws.com/Minecraft.Download/versions/${MINECRAFT_VERSION}/minecraft_server.${MINECRAFT_VERSION}.jar
-ARG MINECRAFT_URL=https://launcher.mojang.com/v1/objects/808be3869e2ca6b62378f9f4b33c946621620019/server.jar
-
-ARG MINECRAFT_VERSION=1.14.4
-ENV MINECRAFT_VERSION ${MINECRAFT_VERSION}
-
+ARG MINECRAFT_URL=https://launcher.mojang.com/v1/objects/3dc3d84a581f14691199cf6831b71ed1296a9fdf/server.jar
 RUN curl -fsSL ${MINECRAFT_URL} -o /usr/share/minecraft/server.jar 
 
